@@ -1,6 +1,8 @@
-# Spin up en Windows VM i Azure + Bastion
+# Spin up en VM i Azure (Windows + Linux)
 
-Guide för att skapa en Windows-VM via Azure Portal, förstå vad som skapas automatiskt, och logga in säkert via Bastion.
+Guide för att skapa VM:ar via Azure Portal, förstå vad som skapas automatiskt, och logga in säkert (Bastion för Windows, SSH för Linux).
+
+# Del 1: Windows VM + Bastion
 
 ## 1. Skapa VM:n
 
@@ -61,3 +63,64 @@ Disk och ev. Bastion/Public IP fortsätter kosta lite tills resursgruppen tas bo
 När du är helt klar med momentet:
 
 - Ta bort hela **resursgruppen** i Azure Portal (raderar alla resurser i den, inkl. VM, disk, NSG, Bastion, public IP)
+
+---
+
+# Del 2: Linux VM + SSH
+
+## 1. Skapa VM:n
+
+1. Sök **"Virtual machines"** → **"+ Create"** → **"Azure virtual machine"**
+2. **Basics**:
+   - Resource group: skapa ny (t.ex. `linux-vm-rg`)
+   - Image: t.ex. **Ubuntu Server 24.04 LTS**
+   - Size: **Standard_B1s** eller **B2s** (Linux är lättviktigt, B1s räcker oftast)
+   - **Authentication type**:
+     - **SSH public key** (säkrare, rekommenderas) – Azure kan generera ett nyckelpar åt dig; ladda ner och spara den privata nyckeln (`.pem`-fil)
+     - **Password** (enklare för test)
+   - **Public inbound ports**: **"Allow selected ports"** → **SSH (22)** om du ska ansluta direkt över internet. Välj **"None"** om du hellre vill testa via Bastion (samma princip som Windows-VM:n).
+3. Övriga flikar: samma resonemang som för Windows-VM:n (Disk: Standard HDD, Management: Auto-shutdown)
+4. **Review + create** → **Create** → **"Go to resource"**
+
+## 2. Vad är SSH?
+
+**SSH (Secure Shell)** är Linux-världens motsvarighet till RDP – ett protokoll för att fjärransluta till en server på ett krypterat sätt. Skillnaden: SSH ger dig en **textbaserad terminal** (kommandorad), inte ett grafiskt skrivbord, vilket är normalt för Linux-servrar.
+
+## 3. SSH:a in i VM:n
+
+1. Hämta VM:ns **publika IP-adress** från Overview-sidan i portalen
+2. Öppna PowerShell/Git Bash lokalt och kör:
+
+```bash
+ssh <användarnamn>@<publik-IP>
+```
+
+3. Första gången frågar SSH om du litar på värdens fingerprint → svara `yes`
+
+**Om du får `Permission denied (publickey)`:**
+Det betyder att VM:n bara accepterar SSH-nyckel, inte lösenord. Ange nyckeln explicit:
+
+```bash
+ssh -i "C:\sokvag\till\din_nyckel.pem" <användarnamn>@<publik-IP>
+```
+
+(`.pem`-filen hamnar oftast i Nedladdningar-mappen när Azure genererar nyckeln åt dig)
+
+**Lyckad inloggning** ser ut ungefär så här:
+
+```
+azureuser@linuxtest:~$
+```
+
+Testa gärna:
+```bash
+whoami     # vilken användare du är
+pwd        # var i filsystemet du är
+uname -a   # systeminfo
+```
+
+## 4. Avsluta
+
+1. Skriv `exit` för att koppla ner SSH-sessionen
+2. Gå till Azure Portal → VM:n → **"Stop"** → vänta på **"Stopped (deallocated)"**
+3. Radera resursgruppen (`linux-vm-rg`) om du inte ska tillbaka till VM:n
