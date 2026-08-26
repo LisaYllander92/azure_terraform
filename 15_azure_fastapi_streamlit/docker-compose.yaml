@@ -8,6 +8,7 @@ services:
       dockerfile: dockerfiles/backend.dockerfile  
     ports:
       - "8000:8000"
+    image: pokemonregistry92-fgaceagjgjgqcwfq.azurecr.io/backend:v1
 
 # Frontend
 
@@ -20,3 +21,4 @@ services:
       - "8501:8501"
     environment:
       BACKEND_URL: http://backend:8000
+    image: pokemonregistry92-fgaceagjgjgqcwfq.azurecr.io/frontend:v2
